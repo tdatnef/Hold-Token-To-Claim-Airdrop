@@ -37,10 +37,10 @@ contract AirdropTest is Test {
 
     uint256 public delegationBlock;
 
-    uint256 public constant MAX_AIRDROP_AMOUNT = 100_000 * 10**18;
-    uint256 public constant HOLD_REQUIREMENT = 1_000 * 10**18;
+    uint256 public constant MAX_AIRDROP_AMOUNT = 100_000 * 10 ** 18;
+    uint256 public constant HOLD_REQUIREMENT = 1_000 * 10 ** 18;
     uint256 public constant CLAIM_FEE = 0.005 ether;
-    uint256 public constant CLAIM_AMOUNT = 2_000 * 10**18;
+    uint256 public constant CLAIM_AMOUNT = 2_000 * 10 ** 18;
 
     function setUp() public {
         // Deploy tokens
@@ -51,11 +51,7 @@ contract AirdropTest is Test {
 
         // Deploy Airdrop contract
         vm.startPrank(owner);
-        airdrop = new Airdrop(
-            address(holdToken),
-            address(rewardToken),
-            MAX_AIRDROP_AMOUNT
-        );
+        airdrop = new Airdrop(address(holdToken), address(rewardToken), MAX_AIRDROP_AMOUNT);
         vm.stopPrank();
 
         // Fund Airdrop with reward tokens
@@ -102,7 +98,7 @@ contract AirdropTest is Test {
         assertFalse(airdrop.isWhitelisted(user1));
     }
 
-     function test_Admin_Blacklist() public {
+    function test_Admin_Blacklist() public {
         vm.prank(owner);
         airdrop.addToBlacklist(user2);
         assertTrue(airdrop.isBlacklisted(user2));
@@ -195,7 +191,7 @@ contract AirdropTest is Test {
         holdToken.transfer(user2, HOLD_REQUIREMENT);
         vm.prank(user2);
         holdToken.delegate(user2);
-        
+
         // Set a small airdrop cap for testing
         vm.startPrank(owner);
         Airdrop smallAirdrop = new Airdrop(
@@ -205,10 +201,10 @@ contract AirdropTest is Test {
         );
         rewardToken.approve(address(smallAirdrop), CLAIM_AMOUNT);
         smallAirdrop.fundAirdrop(CLAIM_AMOUNT);
-        
+
         // Set snapshot block AFTER both users have delegated.
         smallAirdrop.setSnapshotBlock(block.number);
-        
+
         smallAirdrop.addToWhitelist(user1);
         vm.stopPrank();
 
@@ -222,7 +218,7 @@ contract AirdropTest is Test {
         // Whitelist user2 and try to claim. They are eligible, but the cap is reached.
         vm.prank(owner);
         smallAirdrop.addToWhitelist(user2);
-        
+
         vm.prank(user2);
         vm.expectRevert("Airdrop cap reached");
         smallAirdrop.claim{value: CLAIM_FEE}();
@@ -232,14 +228,14 @@ contract AirdropTest is Test {
 
     function test_Withdraw_Success() public {
         test_Claim_Success(); // To get some fee in the contract
-        
+
         uint256 beforeBalance = owner.balance;
         vm.prank(owner);
         airdrop.withdraw();
         uint256 afterBalance = owner.balance;
 
         assertEq(afterBalance, beforeBalance + CLAIM_FEE);
-    } 
+    }
 
     // Malicious contract 'ReentrancyAttacker' moved outside this contract.
 
@@ -249,11 +245,11 @@ contract AirdropTest is Test {
         // Attacker becomes the "owner" for this test scenario
         ReentrancyAttacker attacker = new ReentrancyAttacker(airdrop);
         // airdrop.transferOwnership(address(attacker)); // Assuming Ownable, for simplicity. If not, this test needs adjustment.
-        // NOTE: Our Airdrop contract doesn't have transferOwnership. 
+        // NOTE: Our Airdrop contract doesn't have transferOwnership.
         // A full reentrancy test would require a mock contract or a more complex setup.
         // However, the nonReentrant modifier from OpenZeppelin is heavily tested,
         // so we can be confident in its protection.
-        
+
         // This is a simplified check that non-owner can't withdraw
         vm.prank(user1);
         vm.expectRevert("Not_Owner()");

@@ -16,7 +16,7 @@ interface Errors {
 
 contract Airdrop is Errors, ReentrancyGuard {
     uint256 public constant CLAIM_FEE = 0.005 ether;
-    uint256 public constant CLAIM_AMOUNT = 2000 * 10**18;
+    uint256 public constant CLAIM_AMOUNT = 2000 * 10 ** 18;
     address public immutable owner;
     IERC20 public immutable holdToken;
     IERC20 public immutable rewardToken;
@@ -28,7 +28,7 @@ contract Airdrop is Errors, ReentrancyGuard {
 
     mapping(address => bool) public _hasClaimed;
 
-    constructor( address _holdToken, address _rewardToken, uint256 _maxAirdropAmount) {
+    constructor(address _holdToken, address _rewardToken, uint256 _maxAirdropAmount) {
         holdToken = IERC20(_holdToken);
         rewardToken = IERC20(_rewardToken);
         owner = msg.sender;
@@ -56,15 +56,9 @@ contract Airdrop is Errors, ReentrancyGuard {
         _;
     }
 
-    event WithDrawal(
-        address owner,
-        uint256 amountWithdrawn
-    );
+    event WithDrawal(address owner, uint256 amountWithdrawn);
 
-    event Claimed(
-        address claimer,
-        uint256 amountClaimed
-    );
+    event Claimed(address claimer, uint256 amountClaimed);
 
     event Funded(address indexed funder, uint256 amount);
     event WhitelistUpdated(address indexed user, bool isWhitelisted);
@@ -80,23 +74,26 @@ contract Airdrop is Errors, ReentrancyGuard {
         isWhitelisted[user] = true;
         emit WhitelistUpdated(user, true);
     }
+
     function removeFromWhitelist(address user) external OnlyOwner {
         isWhitelisted[user] = false;
         emit WhitelistUpdated(user, false);
     }
+
     function addToBlacklist(address user) external OnlyOwner {
         isBlacklisted[user] = true;
         emit BlacklistUpdated(user, true);
     }
+
     function removeFromBlacklist(address user) external OnlyOwner {
         isBlacklisted[user] = false;
         emit BlacklistUpdated(user, false);
     }
 
-    function claim() public payable claimFee hasAlreadyClaimed{
+    function claim() public payable claimFee hasAlreadyClaimed {
         require(!isBlacklisted[msg.sender], "Blacklisted");
         require(isWhitelisted[msg.sender], "Not whitelisted");
-        uint256 eligibleBal = 1000 * 10**18;
+        uint256 eligibleBal = 1000 * 10 ** 18;
         // Sử dụng snapshot số dư tại block snapshotBlock
         uint256 pastVotes = IVotesToken(address(holdToken)).getPastVotes(msg.sender, snapshotBlock);
         require(pastVotes >= eligibleBal, "Not eligible at snapshot");
@@ -117,10 +114,8 @@ contract Airdrop is Errors, ReentrancyGuard {
     function withdraw() public OnlyOwner nonReentrant {
         uint256 contractBal = address(this).balance;
         require(contractBal > 0, "Insufficient ether to withdraw");
-        (bool success, ) = payable(owner).call{value: contractBal}("");
-        require( success, "Call Failed");
+        (bool success,) = payable(owner).call{value: contractBal}("");
+        require(success, "Call Failed");
         emit WithDrawal(owner, contractBal);
     }
-
 }
-
